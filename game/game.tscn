@@ -1,11 +1,11 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=3 format=3 uid="uid://wsdtwlufl6aq"]
 
-[ext_resource path="res://addons/multiplayer/NetworkGame.gd" type="Script" id=1]
-[ext_resource path="res://player/player.tscn" type="PackedScene" id=2]
+[ext_resource type="Script" uid="uid://cjgjw5i3k3or5" path="res://addons/multiplayer/NetworkGame.gd" id="1"]
+[ext_resource type="PackedScene" path="res://player/player.tscn" id="2"]
 
 [node name="NetworkGame" type="Node"]
-script = ExtResource( 1 )
+script = ExtResource("1")
 ip = "gamedev.paulmethfessel.com"
-player_scene = ExtResource( 2 )
+player_scene = ExtResource("2")
 
 [node name="game" type="Node2D" parent="."]

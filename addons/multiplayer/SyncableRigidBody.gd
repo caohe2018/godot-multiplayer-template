@@ -6,7 +6,7 @@ var reset_angular_velocity
 var reset_position
 var reset_rotation
 
-func _integrate_forces(state: Physics2DDirectBodyState):
+func _integrate_forces(state: PhysicsDirectBodyState2D):
 	if reset:
 		reset = false
 		state.transform = Transform2D(reset_rotation, reset_position)
@@ -22,7 +22,7 @@ func use_update(state: Dictionary):
 	
 	# warning-ignore:return_value_discarded
 	state.erase('position')
-	# warning-ignore:return_value_discarded
+	# warning-ignore:return_value_discarded 注意这里有lineary_velocity的拼写错误，应该是linear_velocity。
 	state.erase('lineary_velocity')
 	# warning-ignore:return_value_discarded
 	state.erase('angular_velocity')

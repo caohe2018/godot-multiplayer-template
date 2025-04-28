@@ -1,18 +1,15 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=2 format=3 uid="uid://c5ynrwnp1lua2"]
 
-[sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 19.4735, 20.0481 )
+[sub_resource type="RectangleShape2D" id="1"]
+size = Vector2(38.947, 40.0962)
 
 [node name="PhysicsBlock" type="RigidBody2D"]
 
 [node name="ColorRect" type="ColorRect" parent="."]
-margin_left = -20.0
-margin_top = -20.0
-margin_right = 20.0
-margin_bottom = 20.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource( 1 )
+shape = SubResource("1")

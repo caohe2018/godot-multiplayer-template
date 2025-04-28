@@ -1,28 +1,24 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=4 format=3 uid="uid://ddohxqka1pri5"]
 
-[ext_resource path="res://addons/multiplayer/Sync.gd" type="Script" id=1]
-[ext_resource path="res://examples/example1/physics_projectile/PhysicsProjectile.gd" type="Script" id=2]
+[ext_resource type="Script" uid="uid://b8tw3wl30drt6" path="res://addons/multiplayer/Sync.gd" id="1"]
+[ext_resource type="Script" uid="uid://c4j7pg6f70amp" path="res://examples/example1/physics_projectile/PhysicsProjectile.gd" id="2"]
 
-[sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 7.2503, 6.93612 )
+[sub_resource type="RectangleShape2D" id="1"]
+size = Vector2(14.5006, 13.8722)
 
 [node name="physics_projectile" type="RigidBody2D"]
-contacts_reported = 1
 contact_monitor = true
-script = ExtResource( 2 )
+max_contacts_reported = 1
+script = ExtResource("2")
 
 [node name="ColorRect" type="ColorRect" parent="."]
-margin_left = -7.0
-margin_top = -7.0
-margin_right = 7.0
-margin_bottom = 7.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+offset_left = -7.0
+offset_top = -7.0
+offset_right = 7.0
+offset_bottom = 7.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource( 1 )
+shape = SubResource("1")
 
 [node name="Sync" type="Node" parent="."]
-script = ExtResource( 1 )
-initial = PoolStringArray( "position", "rotation", "direction", "owned_by_id" )
+script = ExtResource("1")

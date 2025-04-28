@@ -6,33 +6,18 @@
 ;   [section] ; section goes between []
 ;   param=value ; assign values to parameters
 
-config_version=4
-
-_global_script_classes=[ {
-"base": "Node",
-"class": "NetworkGame",
-"language": "GDScript",
-"path": "res://addons/multiplayer/NetworkGame.gd"
-}, {
-"base": "Node",
-"class": "Sync",
-"language": "GDScript",
-"path": "res://addons/multiplayer/Sync.gd"
-} ]
-_global_script_class_icons={
-"NetworkGame": "",
-"Sync": ""
-}
+config_version=5
 
 [application]
 
 config/name="MultiplayerTemplate"
 run/main_scene="res://game/game.tscn"
+config/features=PackedStringArray("4.4")
 config/icon="res://icon.png"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/multiplayer/plugin.cfg" )
+enabled=PackedStringArray("res://addons/multiplayer/plugin.cfg")
 
 [global]
 
@@ -44,4 +29,4 @@ main=false
 
 [rendering]
 
-environment/default_environment="res://default_env.tres"
+environment/defaults/default_environment="res://default_env.tres"

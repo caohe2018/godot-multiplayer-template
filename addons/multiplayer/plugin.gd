@@ -1,4 +1,4 @@
-tool
+@tool
 extends EditorPlugin
 
 var button
@@ -12,17 +12,17 @@ const OPTIONS = [
 
 func launch(id):
 	if id == 0:
-		get_editor_interface().play_main_scene()
-		OS.execute(OS.get_executable_path(), ["--position", "800,100", "--client"], false)
+		EditorInterface.play_main_scene()
+		OS.execute(OS.get_executable_path(), ["--position", "800,100", "--client"], [])
 	elif id == 1:
-		OS.execute(OS.get_executable_path(), ["--position", "800,100"], false)
+		OS.execute(OS.get_executable_path(), ["--position", "800,100"], [])
 		OS.set_environment("USE_CLIENT", "true")
-		get_editor_interface().play_main_scene()
+		EditorInterface.play_main_scene()
 		OS.set_environment("USE_CLIENT", "false")
 	elif id == 2:
-		get_editor_interface().play_main_scene()
-		OS.execute(OS.get_executable_path(), ["--position", "600,100", "--client"], false)
-		OS.execute(OS.get_executable_path(), ["--position", "800,300", "--client"], false)
+		EditorInterface.play_main_scene()
+		OS.execute(OS.get_executable_path(), ["--position", "600,100", "--client"], [])
+		OS.execute(OS.get_executable_path(), ["--position", "800,300", "--client"], [])
 	last_selected_option = id
 	update_text()
 
@@ -37,14 +37,14 @@ func find_editor_run_button(node: Node):
 	return null
 
 func _input(event):
-	if event is InputEventKey and event.shift and event.control and event.scancode == KEY_D and event.pressed:
+	if event is InputEventKey and event.shift and event.control and event.keycode == KEY_D and event.pressed:
 		launch(last_selected_option)
 
 func _enter_tree():
-	if not Engine.editor_hint:
+	if not Engine.is_editor_hint():
 		return
 	
-	var base = get_editor_interface().get_base_control()
+	var base = EditorInterface.get_base_control()
 	var container = find_editor_run_button(base).get_parent().get_parent()
 	
 	button = MenuButton.new()
@@ -53,19 +53,19 @@ func _enter_tree():
 	for option in OPTIONS:
 		button.get_popup().add_item(option)
 	
-	button.get_popup().connect("id_pressed", self, "launch")
-	button.icon = base.get_icon("MainPlay", "EditorIcons")
+	button.get_popup().connect("id_pressed", Callable(self, "launch"))
+	button.icon = base.get_icon("MainPlay")
 	
-	add_custom_type("Sync", "Node", preload("Sync.gd"), base.get_icon("Reload", "EditorIcons"))
-	add_custom_type("NetworkGame", "Node", preload("NetworkGame.gd"), base.get_icon("MainPlay", "EditorIcons"))
+	add_custom_type("Sync", "Node", preload("res://addons/multiplayer/Sync.gd"), base.get_icon("Reload"))
+	add_custom_type("NetworkGame", "Node", preload("res://addons/multiplayer/NetworkGame.gd"), base.get_icon("MainPlay"))
 
 func update_text():
 	if button:
 		button.text = OPTIONS[last_selected_option] + " (Ctrl+Shift+D)"
 
 func _exit_tree():
-	disable_plugin()
+	_disable_plugin()
 
-func disable_plugin():
+func _disable_plugin():
 	if button:
 		button.queue_free()

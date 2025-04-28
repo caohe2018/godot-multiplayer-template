@@ -8,15 +8,15 @@ script = ExtResource( 2 )
 
 [node name="Sync" type="Node" parent="."]
 script = ExtResource( 1 )
-initial = PoolStringArray( "color" )
-unreliable_synced = PoolStringArray( "position" )
+initial = PackedStringArray( "color" )
+unreliable_synced = PackedStringArray( "position" )
 process_only_network_master = true
 
 [node name="token" type="ColorRect" parent="."]
-margin_left = -19.0
-margin_top = -19.0
-margin_right = 21.0
-margin_bottom = 21.0
+offset_left = -19.0
+offset_top = -19.0
+offset_right = 21.0
+offset_bottom = 21.0
 __meta__ = {
 "_edit_use_anchors_": false
 }

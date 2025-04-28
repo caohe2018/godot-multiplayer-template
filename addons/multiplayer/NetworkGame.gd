@@ -1,13 +1,13 @@
 extends Node
 class_name NetworkGame
 
-export(int) var port = 8877
-export var ip = 'localhost'
-export var max_players = 200
-export var auto_connect = true
-export(PackedScene) var player_scene
-export(NodePath) var players_container
-export var change_window_title = true
+@export var port: int = 8877
+@export var ip = 'localhost'
+@export var max_players = 200
+@export var auto_connect = true
+@export var player_scene: PackedScene
+@export var players_container: NodePath
+@export var change_window_title = true
 
 # Note: this are only emitted on the server
 signal player_joined(player, game)
@@ -44,8 +44,8 @@ func connect_via_cli():
 
 func connect_client(ip, port):
 	var peer = create_client(ip, port)
-	assert(get_tree().connect("server_disconnected", self, "client_server_gone") == OK)
-	get_tree().set_network_peer(peer)
+	get_tree().get_multiplayer().set_multiplayer_peer(peer)
+	assert(multiplayer.connect("server_disconnected", Callable(self, "client_server_gone")) == OK)
 	
 	if change_window_title:
 		append_title_string(" (Client)")
@@ -53,34 +53,34 @@ func connect_client(ip, port):
 func create_client(ip, port):
 	print("Connecting to " + ip + ":" + str(port))
 	if is_on_web():
-		var peer = WebSocketClient.new()
-		assert(peer.connect_to_url(ip + ":" + str(port), [], true) == OK)
+		var peer = WebSocketMultiplayerPeer.new()
+		assert(peer.create_client(ip + ":" + str(port)) == OK)
 		return peer
 	else:
-		var peer = NetworkedMultiplayerENet.new()
+		var peer = ENetMultiplayerPeer.new()
 		assert(peer.create_client(ip, port) == OK)
 		return peer
 
 func connect_server(port, is_dedicated):
 	var peer = create_server(port)
-	assert(get_tree().connect("network_peer_connected", self, "server_client_connected") == OK)
-	assert(get_tree().connect("network_peer_disconnected", self, "server_client_disconnected") == OK)
-	get_tree().set_network_peer(peer)
+	get_tree().get_multiplayer().set_multiplayer_peer(peer)
+	assert(multiplayer.connect("peer_connected", Callable(self, "server_client_connected")) == OK)
+	assert(multiplayer.connect("peer_disconnected", Callable(self, "server_client_disconnected")) == OK)
 	server_init_world(is_dedicated)
 	
 	if change_window_title:
 		append_title_string(" (Server)")
 
 func create_server(port):
-	print("Listening for connections on " + String(port) + " ...")
+	print("Listening for connections on " + str(port) + " ...")
 	if is_for_web():
 		print("Using web listener")
-		var peer = WebSocketServer.new()
-		assert(peer.listen(port, PoolStringArray(), true) == OK)
+		var peer = WebSocketMultiplayerPeer.new()
+		assert(peer.create_server(port) == OK)
 		return peer
 	else:
 		print("Using enet/native listener")
-		var peer = NetworkedMultiplayerENet.new()
+		var peer = ENetMultiplayerPeer.new()
 		assert(peer.create_server(port, max_players) == OK)
 		return peer
 
@@ -134,18 +134,18 @@ func server_init_world(dedicated):
 	if not dedicated:
 		server_spawn_new_player(1)
 
-remote func client_despawn_initial(path: NodePath):
+@rpc("any_peer") func client_despawn_initial(path: NodePath):
 	get_node(path).queue_free()
 
 func server_spawn_new_player(id: int):
-	var new_player = spawn_object("player_" + String(id), get_players_container(), player_scene.instance(), {}, id, true)
+	var new_player = spawn_object("player_" + str(id), get_players_container(), player_scene.instantiate(), {}, id, true)
 	server_spawn_object_on_clients(new_player)
 	return new_player
 
-remote func client_remove_player(player_id: int):
+@rpc("any_peer") func client_remove_player(player_id: int):
 	var container = get_node(get_players_container())
 	for player in container.get_children():
-		if player.name.begins_with("player_" + String(player_id)):
+		if player.name.begins_with("player_" + str(player_id)):
 			container.remove_child(player)
 			return player
 	print("The player could not be found")
@@ -158,25 +158,25 @@ func get_sync(object: Node):
 		return s.get_sync_state()
 
 func server_spawn_object_on_clients(object: Node):
-	rpc("spawn_object", object.name, object.get_parent().get_path(), object.filename, get_sync(object), 0, false)
+	rpc("spawn_object", object.name, object.get_parent().get_path(), object.scene_file_path, get_sync(object), 0, false)
 
 func server_spawn_object_for(client_id: int, object: Node):
-	rpc_id(client_id, "spawn_object", object.name, object.get_parent().get_path(), object.filename, get_sync(object))
+	rpc_id(client_id, "spawn_object", object.name, object.get_parent().get_path(), object.scene_file_path, get_sync(object))
 
-remote func spawn_object(name: String, parent_path: NodePath, filenameOrNode, state: Dictionary, master_id: int = 0, is_source = false):
+@rpc("any_peer") func spawn_object(name: String, parent_path: NodePath, filenameOrNode, state: Dictionary, master_id: int = 0, is_source = false):
 	# The parent_node MUST exist before spawning the object
 	var parent: Node = get_node(parent_path)
 	var add_to_scene = false
 	
 	var object: Node = parent.get_node_or_null(name)
 	if not object:
-		object = filenameOrNode if filenameOrNode is Node else load(filenameOrNode).instance()
+		object = filenameOrNode if filenameOrNode is Node else load(filenameOrNode).instantiate()
 		object.name = name
 		var s = object.get_node_or_null("Sync")
 		if s:
 			s.is_synced_copy = not is_source
 		if master_id > 0:
-			object.set_network_master(master_id)
+			object.set_multiplayer_authority(master_id)
 		add_to_scene = true
 	
 	if object.has_method("_use_update"):
@@ -184,7 +184,7 @@ remote func spawn_object(name: String, parent_path: NodePath, filenameOrNode, st
 	else:
 		for property in state:
 			if property == '__network_master_id':
-				object.set_network_master(state[property])
+				object.set_multiplayer_authority(state[property])
 			else:
 				object.set(property, state[property])
 	
@@ -195,4 +195,4 @@ remote func spawn_object(name: String, parent_path: NodePath, filenameOrNode, st
 
 func append_title_string(suffix: String):
 	var title = ProjectSettings.get("application/config/name")
-	OS.set_window_title(title + suffix)
+	get_window().set_title(title + suffix)

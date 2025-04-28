@@ -14,12 +14,12 @@ func _network_ready(is_source):
 	
 	apply_central_impulse(direction * speed)
 	
-	if is_network_master():
-		yield(get_tree().create_timer(2), "timeout")
+	if is_multiplayer_authority():
+		await get_tree().create_timer(2).timeout
 		$Sync.remove()
 
-func _integrate_forces(state: Physics2DDirectBodyState):
-	if is_network_master():
+func _integrate_forces(state: PhysicsDirectBodyState2D):
+	if is_multiplayer_authority():
 		for i in range(state.get_contact_count()):
 			var body = state.get_contact_collider_object(i)
 			if body and body.name != owned_by_id and body.is_in_group("players"):

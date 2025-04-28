@@ -1,19 +1,15 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=2 format=3 uid="uid://dvvuyk4fdie5p"]
 
-[ext_resource path="res://addons/multiplayer/Sync.gd" type="Script" id=1]
+[ext_resource type="Script" uid="uid://b8tw3wl30drt6" path="res://addons/multiplayer/Sync.gd" id="1"]
 
 [node name="Block" type="Node2D"]
 
 [node name="ColorRect" type="ColorRect" parent="."]
-margin_left = -20.0
-margin_top = -20.0
-margin_right = 20.0
-margin_bottom = 20.0
-color = Color( 0.34902, 0.662745, 1, 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+color = Color(0.34902, 0.662745, 1, 1)
 
 [node name="Sync" type="Node" parent="."]
-script = ExtResource( 1 )
-initial = PoolStringArray( "position" )
+script = ExtResource("1")

@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=2 format=3 uid="uid://dppwtwj8m2akt"]
 
-[ext_resource path="res://addons/multiplayer/NetworkGame.gd" type="Script" id=1]
+[ext_resource type="Script" uid="uid://cjgjw5i3k3or5" path="res://addons/multiplayer/NetworkGame.gd" id="1"]
 
 [node name="Game" type="Node"]
-script = ExtResource( 1 )
+script = ExtResource("1")

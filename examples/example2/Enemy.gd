@@ -1,4 +1,4 @@
-extends KinematicBody2D
+extends CharacterBody2D
 
 var target_id
 const SPEED = 50
@@ -12,6 +12,6 @@ func _physics_process(delta):
 	if target:
 		var direction = (target.position - position).normalized()
 		var collision = move_and_collide(direction * SPEED * delta)
-		if is_network_master() && collision && collision.get_collider().is_in_group("players"):
+		if is_multiplayer_authority() && collision && collision.get_collider().is_in_group("players"):
 			collision.get_collider().take_damage()
 			$Sync.remove()

@@ -1,13 +1,13 @@
 extends Node
 class_name Sync
 
-export (PoolStringArray) var initial = []
-export (PoolStringArray) var synced = []
-export (PoolStringArray) var unreliable_synced = []
-export (PoolStringArray) var interpolated_synced = []
+@export var initial: PackedStringArray = []
+@export var synced: PackedStringArray = []
+@export var unreliable_synced: PackedStringArray = []
+@export var interpolated_synced: PackedStringArray = []
 
-export var process_only_network_master = false
-export var use_ids_for_spawning = true
+@export var process_only_network_master = false
+@export var use_ids_for_spawning = true
 
 var synced_last = {}
 var unreliable_synced_last = {}
@@ -26,7 +26,7 @@ func _ready():
 	
 	set_process(synced.size() > 0 or unreliable_synced.size() > 0 or interpolated_synced.size() > 0)
 	
-	if use_ids_for_spawning and not is_synced_copy and get_tree().has_network_peer():
+	if use_ids_for_spawning and not is_synced_copy and get_tree().get_multiplayer().has_multiplayer_peer():
 		node.name += "_" + preload("uuid.gd").v4()
 	if node.has_method("_network_ready"):
 		node._network_ready(not is_synced_copy)
@@ -36,49 +36,53 @@ func _ready():
 	for property in unreliable_synced:
 		_add_prop(node, unreliable_synced_last, property)
 	for property in interpolated_synced:
-		node.rset_config(property, MultiplayerAPI.RPC_MODE_REMOTE)
+		node.rset_config(property, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
 		interpolated_synced_last[property] = null
 	
-	if get_tree().has_network_peer() and not is_synced_copy:
+	if get_tree().get_multiplayer().has_multiplayer_peer() and not is_synced_copy:
 		game.server_spawn_object_on_clients(node)
 	
 	# wait until our parent is also ready, then configure its process
-	yield(get_tree(), "idle_frame")
+	await get_tree().process_frame
 	if process_only_network_master:
-		var is_master = node.is_network_master()
+		var is_master = node.is_multiplayer_authority()
 		node.set_process(is_master)
 		node.set_process_input(is_master)
 		node.set_physics_process(is_master)
 
 func _add_prop(node, array, property):
-	   node.rset_config(property, MultiplayerAPI.RPC_MODE_REMOTE)
-	   array[property] = null
+	node.rset_config(property, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+	array[property] = null
 
 func add_property(array_name, property):
-	   var last = null
-	   match array_name:
-			   'unreliable_synced':
-					   last = unreliable_synced_last
-					   unreliable_synced = unreliable_synced + [property] as PoolStringArray
-			   'synced':
-					   last = synced_last
-					   synced = synced + [property] as PoolStringArray
-	   _add_prop(get_parent(), last, property)
-	   set_process(true)
+	var last = null
+	match array_name:
+		'unreliable_synced':
+			last = unreliable_synced_last
+			var temp_array = Array(unreliable_synced)
+			temp_array.append(property)
+			unreliable_synced = PackedStringArray(temp_array)
+		'synced':
+			last = synced_last
+			var temp_array = Array(synced)
+			temp_array.append(property)
+			synced = PackedStringArray(temp_array)
+	_add_prop(get_parent(), last, property)
+	set_process(true)
 
 func remove():
 	var node = get_parent()
-	if node.is_network_master():
+	if node.is_multiplayer_authority():
 		# we just queue free, next _exit_tree will handle syncing
 		node.queue_free()
 
 func _exit_tree():
 	var node = get_parent()
-	if node.is_network_master():
+	if node.is_multiplayer_authority():
 		rpc("clients_remove")
 		check_note_removal()
 
-remote func clients_remove():
+@rpc("any_peer") func clients_remove():
 	check_note_removal()
 	get_parent().queue_free()
 
@@ -88,7 +92,7 @@ func check_note_removal():
 
 func _process(delta):
 	var node = get_parent()
-	if not node.is_network_master():
+	if not node.is_multiplayer_authority():
 		for property in interpolated_synced_target:
 			get_parent().set(property,
 				lerp(get_parent().get(property), interpolated_synced_target[property], delta * 10))
@@ -103,17 +107,17 @@ func _process(delta):
 	for property in unreliable_synced:
 		var value = node.get(property)
 		if not unreliable_synced_last.has(property) or value != unreliable_synced_last[property]:
-			node.rset_unreliable(property, value)
+			node.rset(property, value, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE)
 			unreliable_synced_last[property] = value
 	
 	for property in interpolated_synced:
 		var value = node.get(property)
 		# if value != interpolated_synced_last[property]:
 		#node.rset_unreliable(property, value)
-		rpc_unreliable("interp_set", property, value)
+		rpc("interp_set", property, value, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE)
 		interpolated_synced_last[property] = value
 
-remote func interp_set(property, value):
+@rpc("any_peer") func interp_set(property, value):
 	var n = get_parent()
 	interpolated_synced_target[property] = value
 
@@ -135,6 +139,6 @@ func get_sync_state():
 		state[property] = value
 		interpolated_synced_last[property] = value
 	
-	if get_network_master() > 0:
-		state['__network_master_id'] = get_network_master()
+	if get_multiplayer_authority() > 0:
+		state['__network_master_id'] = get_multiplayer_authority()
 	return state
