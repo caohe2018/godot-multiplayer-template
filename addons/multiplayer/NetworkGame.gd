@@ -44,8 +44,8 @@ func connect_via_cli():
 
 func connect_client(ip, port):
 	var peer = create_client(ip, port)
-	get_tree().get_multiplayer().set_multiplayer_peer(peer)
-	assert(multiplayer.connect("server_disconnected", Callable(self, "client_server_gone")) == OK)
+	get_tree().get_multiplayer().multiplayer_peer = peer
+	assert(multiplayer.server_disconnected.connect(client_server_gone) == OK)
 	
 	if change_window_title:
 		append_title_string(" (Client)")
@@ -63,9 +63,9 @@ func create_client(ip, port):
 
 func connect_server(port, is_dedicated):
 	var peer = create_server(port)
-	get_tree().get_multiplayer().set_multiplayer_peer(peer)
-	assert(multiplayer.connect("peer_connected", Callable(self, "server_client_connected")) == OK)
-	assert(multiplayer.connect("peer_disconnected", Callable(self, "server_client_disconnected")) == OK)
+	get_tree().get_multiplayer().multiplayer_peer = peer
+	assert(multiplayer.peer_connected.connect(server_client_connected) == OK)
+	assert(multiplayer.peer_disconnected.connect(server_client_disconnected) == OK)
 	server_init_world(is_dedicated)
 	
 	if change_window_title:
@@ -102,16 +102,16 @@ func server_client_connected(new_id: int):
 				server_spawn_object_for(new_id, node)
 		
 		for path in despawned_initial_paths:
-			rpc("client_despawn_initial", path)
+			rpc_id(0, "client_despawn_initial", path)
 		
 		var player = server_spawn_new_player(new_id)
-		emit_signal("player_joined", player, self)
+		player_joined.emit(player, self)
 
 func server_client_disconnected(id: int):
 	print("Disconnected ", id)
 	var player = client_remove_player(id)
-	rpc("client_remove_player", id)
-	emit_signal("player_left", player, self)
+	rpc_id(0, "client_remove_player", id)
+	player_left.emit(player, self)
 
 func client_server_gone():
 	print("Server disconnected from player, exiting ...")
@@ -158,7 +158,7 @@ func get_sync(object: Node):
 		return s.get_sync_state()
 
 func server_spawn_object_on_clients(object: Node):
-	rpc("spawn_object", object.name, object.get_parent().get_path(), object.scene_file_path, get_sync(object), 0, false)
+	rpc_id(0, "spawn_object", object.name, object.get_parent().get_path(), object.scene_file_path, get_sync(object), 0, false)
 
 func server_spawn_object_for(client_id: int, object: Node):
 	rpc_id(client_id, "spawn_object", object.name, object.get_parent().get_path(), object.scene_file_path, get_sync(object))

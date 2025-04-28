@@ -6,7 +6,7 @@ const speed = 200
 
 func _ready():
 	add_to_group("players")
-	assert(connect("health_changed", Callable(get_parent(), "update_health")) == OK)
+	assert(health_changed.connect(get_parent().update_health) == OK)
 
 func _network_ready(is_source):
 	if is_source:
@@ -15,7 +15,7 @@ func _network_ready(is_source):
 func take_damage():
 	if is_multiplayer_authority():
 		health -= 0.04
-		emit_signal("health_changed", health)
+		health_changed.emit(health)
 
 func _process(delta):
 	if Input.is_action_pressed("ui_up"):

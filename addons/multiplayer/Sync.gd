@@ -36,7 +36,7 @@ func _ready():
 	for property in unreliable_synced:
 		_add_prop(node, unreliable_synced_last, property)
 	for property in interpolated_synced:
-		node.rset_config(property, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+		node.get_multiplayer().rset_config(property, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
 		interpolated_synced_last[property] = null
 	
 	if get_tree().get_multiplayer().has_multiplayer_peer() and not is_synced_copy:
@@ -51,7 +51,7 @@ func _ready():
 		node.set_physics_process(is_master)
 
 func _add_prop(node, array, property):
-	node.rset_config(property, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+	node.get_multiplayer().rset_config(property, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
 	array[property] = null
 
 func add_property(array_name, property):
@@ -79,7 +79,7 @@ func remove():
 func _exit_tree():
 	var node = get_parent()
 	if node.is_multiplayer_authority():
-		rpc("clients_remove")
+		rpc_id(0, "clients_remove")
 		check_note_removal()
 
 @rpc("any_peer") func clients_remove():
@@ -101,13 +101,14 @@ func _process(delta):
 	for property in synced:
 		var value = node.get(property)
 		if not synced_last.has(property) or value != synced_last[property]:
-			node.rset(property, value)
+			node.get_multiplayer().rset(property, value)
 			synced_last[property] = value
 	
 	for property in unreliable_synced:
 		var value = node.get(property)
 		if not unreliable_synced_last.has(property) or value != unreliable_synced_last[property]:
-			node.rset(property, value, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE)
+			node.get_multiplayer().rset_config(property, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE)
+			node.get_multiplayer().rset(property, value)
 			unreliable_synced_last[property] = value
 	
 	for property in interpolated_synced:

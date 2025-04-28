@@ -53,7 +53,7 @@ func _enter_tree():
 	for option in OPTIONS:
 		button.get_popup().add_item(option)
 	
-	button.get_popup().connect("id_pressed", Callable(self, "launch"))
+	button.get_popup().id_pressed.connect(launch)
 	button.icon = base.get_icon("MainPlay")
 	
 	add_custom_type("Sync", "Node", preload("res://addons/multiplayer/Sync.gd"), base.get_icon("Reload"))

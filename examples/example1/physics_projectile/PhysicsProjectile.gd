@@ -23,4 +23,4 @@ func _integrate_forces(state: PhysicsDirectBodyState2D):
 		for i in range(state.get_contact_count()):
 			var body = state.get_contact_collider_object(i)
 			if body and body.name != owned_by_id and body.is_in_group("players"):
-				body.rpc("kill")
+				body.rpc_id(0, "kill")
